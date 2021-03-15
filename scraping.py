@@ -21,7 +21,8 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": hemispheres(browser)
     }
 
     # Stop webdriver and return data
@@ -95,6 +96,47 @@ def mars_facts():
     df.set_index('description', inplace=True)
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html()
+
+def hemispheres(browser):
+    # 1. Use browser to visit the URL 
+    url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url)
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    #items = browser.find_by_css('a.product-item h3')
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+    for i in range(4):
+        #create empty dictionary
+        #hemispheres = {}
+        browser.find_by_css('a.product-item h3')[i].click()
+        #element = browser.links.find_by_text('Sample').first
+        #img_url = element['href']
+        #title = browser.find_by_css("h2.title").text
+        #hemispheres["img_url"] = img_url
+        #hemispheres["title"] = title
+        hemisphere_data = scrape_hemisphere(browser.html)
+        hemisphere_image_urls.append(hemisphere_data)
+        browser.back()
+    return hemisphere_image_urls
+
+def scrape_hemisphere(html_text):
+    # parse html text
+    hemisphere_soup = soup(html_text, "html.parser")
+    # adding try/except for error handling
+    try:
+        title_mars = hemisphere_soup.find("h2", class_="title").get_text()
+        sample_mars = hemisphere_soup.find("a", text="Sample").get("href")
+    except AttributeError:
+        # Image error will return None, for better front-end handling
+        title_mars = None
+        sample_mars = None
+    hemispheres = {
+        "title": title_mars,
+        "img_url": sample_mars
+    }
+    return hemispheres
 
 if __name__ == "__main__":
 
